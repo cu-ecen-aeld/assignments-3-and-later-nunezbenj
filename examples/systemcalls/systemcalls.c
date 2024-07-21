@@ -1,4 +1,12 @@
 #include "systemcalls.h"
+#include <stdlib.h> // needed for system
+#include <stdarg.h> // for vars unknown by called function
+#include <sys/wait.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -17,6 +25,12 @@ bool do_system(const char *cmd)
  *   or false() if it returned a failure
 */
 
+    int retval;
+    retval = system(cmd);
+    if (retval == -1)
+    {
+        return false;
+    }
     return true;
 }
 
@@ -49,19 +63,47 @@ bool do_exec(int count, ...)
     // and may be removed
     command[count] = command[count];
 
-/*
- * TODO:
- *   Execute a system command by calling fork, execv(),
- *   and wait instead of system (see LSP page 161).
- *   Use the command[0] as the full path to the command to execute
- *   (first argument to execv), and use the remaining arguments
- *   as second argument to the execv() command.
- *
-*/
+	/*
+	 * TODO:
+	 *   Execute a system command by calling fork, execv(),
+	 *   and wait instead of system (see LSP page 161).
+	 *   Use the command[0] as the full path to the command to execute
+	 *   (first argument to execv), and use the remaining arguments
+	 *   as second argument to the execv() command.
+	 *
+	*/
+    pid_t cpid, w;
+    int wstatus;
+    cpid = fork();
+    if (cpid == -1) {
+        perror("fork");
+        return false;
+    }
+    if (cpid == 0) {            /* Code executed by child */
+        printf("Child PID is %ld\n", (long) getpid());
+        execv(command[0], command);
+        perror("execv");  // execv returns only on failure
+        exit(EXIT_FAILURE);
+    } else {                    /* Code executed by parent */
+        do {
+            w = waitpid(cpid, &wstatus, WUNTRACED | WCONTINUED);
+            if (w == -1) {
+                perror("waitpid");
+                return false;
+            }
+            if (WIFEXITED(wstatus)) {
+                if (WEXITSTATUS(wstatus) != 0) {
+                    return false; // Command failed
+                }
+            } else if (WIFSIGNALED(wstatus)) {
+                return false; // Command was terminated by a signal
+            }
+        } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
+        return true;
+    }
 
     va_end(args);
-
-    return true;
+    return false;
 }
 
 /**
@@ -85,15 +127,53 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     command[count] = command[count];
 
 
-/*
- * TODO
- *   Call execv, but first using https://stackoverflow.com/a/13784315/1446624 as a refernce,
- *   redirect standard out to a file specified by outputfile.
- *   The rest of the behaviour is same as do_exec()
- *
-*/
+	/*
+	 * TODO
+	 *   Call execv, but first using https://stackoverflow.com/a/13784315/1446624 as a refernce,
+	 *   redirect standard out to a file specified by outputfile.
+	 *   The rest of the behaviour is same as do_exec()
+	 *
+	*/
+	int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+    if (fd < 0) {
+        perror("open");
+        return false;
+    }
+    pid_t cpid, w;
+    int wstatus;
+    cpid = fork();
+    if (cpid == -1) {
+        perror("fork");
+        close(fd);
+        return false;
+    }
+    if (cpid == 0) {            /* Code executed by child */
+        if (dup2(fd, STDOUT_FILENO) < 0) {
+            perror("dup2");
+            close(fd);
+            exit(EXIT_FAILURE);
+        }
+        close(fd);
+        execv(command[0], command);
+        perror("execv");
+        exit(EXIT_FAILURE);
+    } else {                    /* Code executed by parent */
+        close(fd);
+        do {
+     	   w = waitpid(cpid, &wstatus, WUNTRACED | WCONTINUED);
+     	   if (w == -1) {
+     		   perror("waitpid");
+     		   return false;
+     	   }
+     	   if (WIFEXITED(wstatus)) {
+     		   return false;  // command failed
+     	   } else if (WIFSIGNALED(wstatus)) {
+     		   return false;  // command was terminated by a signal
+     	   }
+        } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
+        return true;
+    }
 
     va_end(args);
-
-    return true;
+    return false;
 }
