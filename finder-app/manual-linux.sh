@@ -111,6 +111,7 @@ sudo mknod -m 622 dev/console c 5 1
 echo "Device nodes null and console created in ${OUTDIR}/rootfs/dev/  ... OK"
 
 # TODO: Clean and build the writer utility
+# bnunez: took me hours and hours to figure out two below lines need to be all the way at the end ... not sure what needs to be done in this TODO
 # find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
 # echo "Bundle root file system ${OUTDIR}/rootfs into file ${OUTDIR}/initramfs.cpio  ... OK"
 
