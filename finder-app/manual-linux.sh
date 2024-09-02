@@ -109,7 +109,8 @@ echo "Library dependencies copied to ${OUTDIR}/rootfs/lib64/  ... OK"
 
 # TODO: Make device nodes
 sudo mknod -m 666 dev/null c 1 3
-sudo mknod -m 622 dev/console c 5 1
+#sudo mknod -m 622 dev/console c 5 1
+sudo mknod -m 666 dev/console c 5 1
 echo "Device nodes null and console created in ${OUTDIR}/rootfs/dev/  ... OK"
 
 # TODO: Clean and build the writer utility
