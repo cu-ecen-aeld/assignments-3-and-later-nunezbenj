@@ -14,7 +14,7 @@ BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
-TOOLCHAIN_DIR=/home/nunezbenj/arm-cross-compiler
+TOOLCHAIN_DIR=${FINDER_APP_DIR}/../../../../arm-cross-compiler
 
 
 if [ $# -lt 1 ]
