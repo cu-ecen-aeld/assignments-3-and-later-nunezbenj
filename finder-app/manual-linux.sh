@@ -27,6 +27,11 @@ fi
 
 mkdir -p ${OUTDIR}
 
+
+ls -l ${OUTDIR}
+ls -l ${TOOLCHAIN_DIR}
+
+
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/linux-stable" ]; then
     #Clone only if the repository does not exist.
@@ -102,6 +107,8 @@ echo "Copying necessary library dependencies to rootfs"
 
 echo "TOOLCHAIN_DIR=${TOOLCHAIN_DIR}"
 echo "OUTDIR=${OUTDIR}"
+ls -l ${OUTDIR}
+ls -l ${TOOLCHAIN_DIR}
 ls -l ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/
 ls -l ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/
 
