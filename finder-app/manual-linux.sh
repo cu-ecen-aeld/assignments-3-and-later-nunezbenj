@@ -14,8 +14,7 @@ BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
-TOOLCHAIN_DIR=${FINDER_APP_DIR}/../../../../arm-cross-compiler
-
+TOOLCHAIN_DIR=${FINDER_APP_DIR}/../toolchain_arm64
 
 if [ $# -lt 1 ]
 then
@@ -26,12 +25,6 @@ else
 fi
 
 mkdir -p ${OUTDIR}
-
-echo "FINDER_APP_DIR=${FINDER_APP_DIR}"
-echo "TOOLCHAIN_DIR=${TOOLCHAIN_DIR}"
-ls -l ${OUTDIR}
-ls -l ${TOOLCHAIN_DIR}
-exit 1
 
 
 cd "$OUTDIR"
@@ -107,19 +100,16 @@ ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 echo "Copying necessary library dependencies to rootfs"
 
-echo "TOOLCHAIN_DIR=${TOOLCHAIN_DIR}"
-echo "OUTDIR=${OUTDIR}"
-ls -l ${OUTDIR}
-ls -l ${TOOLCHAIN_DIR}
-ls -l ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/
-ls -l ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/
 
 # Copy the program interpreter
-cp -L ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1 ${OUTDIR}/rootfs/lib/
+# gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc has been externally copied to toolchain_arm64/
+echo "TOOLCHAIN_DIR=${TOOLCHAIN_DIR}"
+tree ${TOOLCHAIN_DIR}
+cp -L ${TOOLCHAIN_DIR}/libc/lib/ld-linux-aarch64.so.1 ${OUTDIR}/rootfs/lib/
 # Copy shared libraries
-cp -L ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libm.so.6 ${OUTDIR}/rootfs/lib64/
-cp -L ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libresolv.so.2 ${OUTDIR}/rootfs/lib64/
-cp -L ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libc.so.6 ${OUTDIR}/rootfs/lib64/
+cp -L ${TOOLCHAIN_DIR}/libc/lib64/libm.so.6 ${OUTDIR}/rootfs/lib64/
+cp -L ${TOOLCHAIN_DIR}/libc/lib64/libresolv.so.2 ${OUTDIR}/rootfs/lib64/
+cp -L ${TOOLCHAIN_DIR}/libc/lib64/libc.so.6 ${OUTDIR}/rootfs/lib64/
 echo "Library dependencies copied to ${OUTDIR}/rootfs/lib64/  ... OK"
 
 # TODO: Make device nodes
