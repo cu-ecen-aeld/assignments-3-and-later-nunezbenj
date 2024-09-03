@@ -99,6 +99,12 @@ echo "Library dependencies"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 echo "Copying necessary library dependencies to rootfs"
+
+echo "TOOLCHAIN_DIR=${TOOLCHAIN_DIR}"
+echo "OUTDIR=${OUTDIR}"
+ls -l ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/
+ls -l ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/
+
 # Copy the program interpreter
 cp -L ${TOOLCHAIN_DIR}/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1 ${OUTDIR}/rootfs/lib/
 # Copy shared libraries
