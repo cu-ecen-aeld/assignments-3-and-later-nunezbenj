@@ -27,9 +27,11 @@ fi
 
 mkdir -p ${OUTDIR}
 
-
+echo "FINDER_APP_DIR=${FINDER_APP_DIR}"
+echo "TOOLCHAIN_DIR=${TOOLCHAIN_DIR}"
 ls -l ${OUTDIR}
 ls -l ${TOOLCHAIN_DIR}
+exit 1
 
 
 cd "$OUTDIR"
