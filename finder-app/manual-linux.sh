@@ -104,7 +104,6 @@ echo "Copying necessary library dependencies to rootfs"
 # Copy the program interpreter
 # gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc has been externally copied to toolchain_arm64/
 echo "TOOLCHAIN_DIR=${TOOLCHAIN_DIR}"
-tree ${TOOLCHAIN_DIR}
 cp -L ${TOOLCHAIN_DIR}/libc/lib/ld-linux-aarch64.so.1 ${OUTDIR}/rootfs/lib/
 # Copy shared libraries
 cp -L ${TOOLCHAIN_DIR}/libc/lib64/libm.so.6 ${OUTDIR}/rootfs/lib64/
