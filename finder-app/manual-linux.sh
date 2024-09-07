@@ -6,7 +6,7 @@ set -e
 set -u
 
 OUTDIR=/home/nunezbenj/sera/buildroot/embeded_arm64
-OUTDIR=/tmp/aeld
+#OUTDIR=/tmp/aeld
 
 KERNEL_REPO=git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
 KERNEL_VERSION=v5.1.10
@@ -118,9 +118,13 @@ sudo mknod -m 666 dev/console c 5 1
 echo "Device nodes null and console created in ${OUTDIR}/rootfs/dev/  ... OK"
 
 # TODO: Clean and build the writer utility
-# bnunez: Took me hours and hours to figure out two below lines need to be all the way at the end ... not sure what needs to be done in this TODO
-# find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
-# echo "Bundle root file system ${OUTDIR}/rootfs into file ${OUTDIR}/initramfs.cpio  ... OK"
+cd ${FINDER_APP_DIR}
+make clean
+make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
+echo "Library dependencies for writer"
+${CROSS_COMPILE}readelf -a writer | grep "program interpreter"
+${CROSS_COMPILE}readelf -a writer | grep "Shared library"
+cd "${OUTDIR}/rootfs"
 
 # TODO: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs The -L option tells cp to follow symbolic link
