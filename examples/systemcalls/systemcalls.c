@@ -165,11 +165,13 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
      		   perror("waitpid");
      		   return false;
      	   }
-     	   if (WIFEXITED(wstatus)) {
-     		   return false;  // command failed
-     	   } else if (WIFSIGNALED(wstatus)) {
-     		   return false;  // command was terminated by a signal
-     	   }
+           if (WIFEXITED(wstatus)) {
+               if (WEXITSTATUS(wstatus) != 0) {
+                  return false; // Command failed
+               }
+           } else if (WIFSIGNALED(wstatus)) {
+                return false; // Command was terminated by a signal
+           }
         } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
         return true;
     }
@@ -177,3 +179,4 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     va_end(args);
     return false;
 }
+
