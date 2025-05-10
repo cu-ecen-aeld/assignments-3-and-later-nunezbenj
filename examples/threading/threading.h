@@ -15,6 +15,11 @@ struct thread_data{
      * your thread implementation.
      */
 
+    // Add mutex and wait arguments to the structure
+    pthread_mutex_t *mutex;  // Mutex for synchronization
+    int wait_to_obtain_ms;   // Time to wait before obtaining the mutex (in ms)
+    int wait_to_release_ms;  // Time to hold the mutex before releasing it (in ms)
+    
     /**
      * Set to true if the thread completed with success, false
      * if an error occurred.
