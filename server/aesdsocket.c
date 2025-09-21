@@ -11,12 +11,11 @@
 #include <stdbool.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <stdarg.h>
-
+#include <stdarg.h>   // <-- needed for va_list / va_start / va_end
 
 #define MYPORT "9000"
 #define BACKLOG 10
-#define MAXDATASIZE 1024               // chunk size for recv/send
+#define MAXDATASIZE 1024
 #define DATAFILE "/var/tmp/aesdsocketdata"
 
 /* ------- tiny logging helpers: mirror to stdout/stderr and syslog ------- */
@@ -26,6 +25,7 @@ static void log_info(const char *fmt, ...)
     va_start(ap, fmt);
     vfprintf(stdout, fmt, ap);
     fputc('\n', stdout);
+    fflush(stdout);
     va_end(ap);
 
     va_start(ap, fmt);
@@ -39,6 +39,7 @@ static void log_err(const char *fmt, ...)
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     fputc('\n', stderr);
+    fflush(stderr);
     va_end(ap);
 
     va_start(ap, fmt);
@@ -72,10 +73,7 @@ static void daemonize(void)
         log_err("fork failed: %s", strerror(err));
         exit(EXIT_FAILURE);
     }
-    if (pid > 0) {
-        // parent exits, child continues as daemon
-        exit(EXIT_SUCCESS);
-    }
+    if (pid > 0) exit(EXIT_SUCCESS);  // parent exits
 
     if (setsid() == -1) {
         int err = errno;
@@ -89,7 +87,6 @@ static void daemonize(void)
         exit(EXIT_FAILURE);
     }
 
-    // redirect stdio to /dev/null
     int fd = open("/dev/null", O_RDWR);
     if (fd >= 0) {
         (void)dup2(fd, STDIN_FILENO);
@@ -113,9 +110,9 @@ int main(int argc, char *argv[])
     int yes = 1;
 
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;      // IPv4 or IPv6
-    hints.ai_socktype = SOCK_STREAM;  // TCP
-    hints.ai_flags = AI_PASSIVE;      // fill in my IP
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
 
     status = getaddrinfo(NULL, MYPORT, &hints, &serverinfo);
     if (status != 0) {
@@ -164,7 +161,6 @@ int main(int argc, char *argv[])
 
     log_info("server: waiting for connections on port %s", MYPORT);
 
-    // start with a clean cumulative file
     unlink(DATAFILE);
     log_info("reset data file at %s", DATAFILE);
 
@@ -175,10 +171,9 @@ int main(int argc, char *argv[])
             if (errno == EINTR) continue;
             int err = errno;
             log_err("accept: %s", strerror(err));
-            continue; // keep server alive
+            continue;
         }
 
-        // log peer IP
         char s[INET6_ADDRSTRLEN];
         void *addr;
         if (their_addr.ss_family == AF_INET) {
@@ -191,7 +186,6 @@ int main(int argc, char *argv[])
         inet_ntop(their_addr.ss_family, addr, s, sizeof(s));
         log_info("Accepted connection from %s", s);
 
-        // open cumulative file (append + read)
         FILE *file_pointer = fopen(DATAFILE, "a+b");
         if (!file_pointer) {
             int err = errno;
@@ -203,11 +197,10 @@ int main(int argc, char *argv[])
         bool saw_newline = false;
         size_t total_rx = 0, total_appended = 0;
 
-        // Receive, append, and detect newline delimiter
         for (;;) {
             ssize_t numbytes = recv(new_fd, buf, sizeof(buf), 0);
             if (numbytes < 0) {
-                if (errno == EINTR) continue; // retry
+                if (errno == EINTR) continue;
                 int err = errno;
                 log_err("recv: %s", strerror(err));
                 goto close_client;
@@ -226,17 +219,15 @@ int main(int argc, char *argv[])
                 goto close_client;
             }
 
-            // check if this chunk contains a newline
             for (ssize_t i = 0; i < numbytes; ++i) {
                 if (buf[i] == '\n') { saw_newline = true; break; }
             }
             if (saw_newline) {
                 log_info("newline detected from %s (rx so far: %zu bytes)", s, total_rx);
-                break; // respond now (avoids nc deadlock)
+                break;
             }
         }
 
-        // Flush and send cumulative file exactly once
         fflush(file_pointer);
         if (fseek(file_pointer, 0L, SEEK_SET) != 0) {
             int err = errno;
@@ -271,10 +262,8 @@ int main(int argc, char *argv[])
         fclose(file_pointer);
         close(new_fd);
         log_info("Closed connection from %s", s);
-        // accept next client
     }
 
-    // not reached
     close(sockfd);
     closelog();
     return EXIT_SUCCESS;
