@@ -6,3 +6,11 @@ crosstool-ng
 aesd-build
 .vscode/
 test.sh.log
+
+# Assignment 5 build artifacts and local clutter
+server/aesdsocket
+server/aesdsocket_works.c
+server/valgrind-out.txt
+.idea/
+cmake-build-debug/
+actions-runner/
